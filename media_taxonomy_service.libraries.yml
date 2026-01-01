@@ -1,0 +1,30 @@
+jstree:
+  version: 3.3.12
+  css:
+    theme:
+      https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css: { type: external, minified: true }
+  js:
+    https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js: { type: external, minified: true }
+  dependencies:
+    - core/jquery
+
+directory_selector:
+  version: 1.x
+  js:
+    js/directory-selector.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/once
+    - core/drupalSettings
+    - media_taxonomy_service/jstree
+    - media_taxonomy_service/taxonomy-manager
+
+taxonomy-manager:
+  version: 1.x
+  css:
+    theme:
+      css/taxonomy-manager.css: {}
+  dependencies:
+    - core/jquery
+    - media_taxonomy_service/jstree

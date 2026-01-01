@@ -1,0 +1,50 @@
+media_taxonomy_service.directory_create_term:
+  path: '/admin/taxonomy-service/directory/create-term'
+  defaults:
+    _controller: '\Drupal\media_taxonomy_service\Controller\TaxonomyDirectoryController::createTerm'
+  requirements:
+    _permission: 'manage media_drop albums'
+  options:
+    no_cache: TRUE
+  methods: [POST]
+
+media_taxonomy_service.directory_delete_term:
+  path: '/admin/taxonomy-service/directory/delete-term'
+  defaults:
+    _controller: '\Drupal\media_taxonomy_service\Controller\TaxonomyDirectoryController::deleteTerm'
+  requirements:
+    _permission: 'manage media_drop albums'
+  options:
+    no_cache: TRUE
+  methods: [POST]
+
+media_taxonomy_service.directory_move_term:
+  path: '/admin/taxonomy-service/directory/move-term'
+  defaults:
+    _controller: '\Drupal\media_taxonomy_service\Controller\TaxonomyDirectoryController::moveTerm'
+  requirements:
+    _permission: 'manage media_drop albums'
+  options:
+    no_cache: TRUE
+  methods: [POST]
+
+media_taxonomy_service.directory_update_term:
+  path: '/admin/taxonomy-service/directory/update-term'
+  defaults:
+    _controller: '\Drupal\media_taxonomy_service\Controller\TaxonomyDirectoryController::updateTerm'
+  requirements:
+    _permission: 'manage media_drop albums'
+  options:
+    no_cache: TRUE
+  methods: [POST]
+
+media_taxonomy_service.directory_get_term:
+  path: '/admin/taxonomy-service/directory/get-term/{term_id}'
+  defaults:
+    _controller: '\Drupal\media_taxonomy_service\Controller\TaxonomyDirectoryController::getTerm'
+  requirements:
+    _permission: 'manage media_drop albums'
+    term_id: '\d+'
+  options:
+    no_cache: TRUE
+  methods: [GET]

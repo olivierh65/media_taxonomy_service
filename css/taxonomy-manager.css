@@ -1,0 +1,392 @@
+/**
+ * @file
+ * Unified CSS for jstree directory selection across media modules.
+ */
+
+/* ==========================================
+   Directory Tree Title and Description
+   ========================================== */
+
+.media-directory-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+  padding: 0;
+  line-height: 1.5;
+}
+
+.media-directory-description {
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 15px 0;
+  padding: 0;
+  line-height: 1.6;
+  font-style: normal;
+}
+
+/* ==========================================
+   Directory Tree Containers
+   ========================================== */
+
+.taxonomy-inline-tree {
+  margin: 0 0;
+}
+
+.taxonomy-inline-tree > label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #333;
+  font-size: 14px;
+}
+
+.taxonomy-inline-tree-container {
+  border: 1px solid #d3d3d3;
+  border-radius: 4px;
+  background-color: #fafafa;
+  padding: 15px;
+  min-height: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 500;
+}
+
+.taxonomy-inline-tree-container.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-style: italic;
+}
+
+.tree-loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+}
+
+/* Empty taxonomy message */
+.taxonomy-empty-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.taxonomy-empty-message p {
+  font-style: italic;
+  margin-bottom: 20px;
+}
+
+.taxonomy-empty-message .btn {
+  padding: 8px 16px;
+  background-color: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.taxonomy-empty-message .btn:hover {
+  background-color: #0052a3;
+}
+
+/* jsTree styling for inline - ONLY customize colors, keep default spacing */
+.taxonomy-inline-tree-container .jstree {
+  background-color: transparent;
+  border: none;
+}
+
+.taxonomy-inline-tree-container .jstree-wholerow:hover {
+  background-color: #e8f4f8;
+}
+
+.taxonomy-inline-tree-container .jstree-node.selected > .jstree-wholerow {
+  background-color: #c8e6f5;
+}
+
+.taxonomy-inline-tree-container .jstree-node.selected > .jstree-anchor {
+  color: #0066cc;
+  font-weight: 500;
+}
+
+/* Context menu */
+.jstree-contextmenu {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
+  z-index: 10000;
+}
+
+.jstree-contextmenu > div {
+  padding: 0;
+}
+
+.jstree-contextmenu a {
+  color: #333;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.jstree-contextmenu a:hover {
+  background-color: #f0f0f0;
+  color: #000;
+}
+
+.jstree-contextmenu a.jstree-disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.jstree-contextmenu a .fa {
+  margin-right: 8px;
+  width: 16px;
+  text-align: center;
+}
+
+/* ==========================================
+   Term Modal Dialog
+   ========================================== */
+
+.taxonomy-term-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100000;
+  display: none;
+}
+
+.taxonomy-term-modal.show {
+  display: flex;
+}
+
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.modal-content {
+  position: relative;
+  margin: auto;
+  width: 90%;
+  max-width: 500px;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+  z-index: 100001;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+}
+
+.modal-close:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.taxonomy-term-form {
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #333;
+  font-size: 14px;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+
+.form-group input[type="text"]::placeholder,
+.form-group textarea::placeholder {
+  color: #999;
+}
+
+.modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.button {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background-color: #f5f5f5;
+  color: #333;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+.button:hover {
+  background-color: #e8e8e8;
+  border-color: #999;
+}
+
+.button--primary {
+  background-color: #0066cc;
+  color: #fff;
+  border-color: #0052a3;
+}
+
+.button--primary:hover {
+  background-color: #0052a3;
+  border-color: #003d7a;
+}
+
+.button--secondary {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+/* ==========================================
+   Alert Messages
+   ========================================== */
+
+.taxonomy-inline-alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  max-width: 400px;
+  padding: 16px 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 11000;
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.alert {
+  padding: 12px 16px;
+  border-radius: 3px;
+  margin-bottom: 10px;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+/* ==========================================
+   Responsive Design
+   ========================================== */
+
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-width: none;
+  }
+
+  .taxonomy-inline-alert {
+    max-width: calc(100% - 40px);
+    right: 20px;
+    left: 20px;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .modal-footer .button {
+    width: 100%;
+  }
+}

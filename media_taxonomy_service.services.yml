@@ -1,0 +1,4 @@
+services:
+  media_taxonomy_service.directory_service:
+    class: Drupal\media_taxonomy_service\Service\DirectoryService
+    arguments: ['@entity_type.manager']
