@@ -1,4 +1,12 @@
 services:
   media_taxonomy_service.directory_service:
     class: Drupal\media_taxonomy_service\Service\DirectoryService
-    arguments: ['@entity_type.manager']
+    arguments:
+      - '@entity_type.manager'
+      - '@file_system'
+      - '@logger.channel.media_taxonomy_service'
+
+  logger.channel.media_taxonomy_service:
+    class: Drupal\Core\Logger\LoggerChannel
+    factory: logger.factory:get
+    arguments: ['media_taxonomy_service']

@@ -50,6 +50,7 @@
   max-height: 400px;
   overflow-y: auto;
   z-index: 500;
+  position: relative;
 }
 
 .taxonomy-inline-tree-container.loading {
