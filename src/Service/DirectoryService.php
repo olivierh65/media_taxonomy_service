@@ -848,4 +848,39 @@ class DirectoryService {
     return $depot_term_id;
   }
 
+  /**
+   * Retreive the settings of a media type.
+   *
+   * @param string $media_type_id
+   *   System ID of the media type (e.g., 'image', 'document').
+   *
+   * @return array|null
+   *   Array of settings or NULL if the media type does not exist.
+   */
+  public function getMediaSourceFieldSettings(string $media_type) : ?array {
+    $media_type = $this->entityTypeManager
+      ->getStorage('media_type')
+      ->load($media_type);
+
+    if (!$media_type) {
+      return NULL;
+    }
+    // Récupération du plugin source.
+    $source = $media_type->getSource();
+
+    // Nom du champ source (ex: field_media_image, field_media_file).
+    $field_name = $source
+      ->getSourceFieldDefinition($media_type)
+      ->getName();
+
+    // Chargement de la config du champ (FieldConfig).
+    $field_config = FieldConfig::loadByName(
+    'media',
+    $media_type->id(),
+    $field_name
+    );
+
+    return $field_config?->getSettings();
+  }
+
 }
