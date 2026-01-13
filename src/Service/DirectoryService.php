@@ -5,6 +5,7 @@ namespace Drupal\media_taxonomy_service\Service;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\File\FileExists;
+use Drupal\Core\File\FileException;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\media\MediaInterface;
 use Drupal\field\Entity\FieldConfig;
@@ -592,6 +593,8 @@ class DirectoryService {
       }
 
       $moved_any = FALSE;
+      $file_repository = \Drupal::service('file.repository');
+      $file_usage = \Drupal::service('file.usage');
 
       foreach ($file_fields as $field_name) {
         if ($media->hasField($field_name)) {
@@ -603,25 +606,81 @@ class DirectoryService {
 
               if ($file) {
                 $old_uri = $file->getFileUri();
+                $old_file_id = $file->id();
                 $filename = basename($old_uri);
                 $new_uri = $target_path . '/' . $filename;
 
+                // Skip if already in the right location.
+                if ($old_uri === $new_uri) {
+                  $this->logger->debug('File @file already in target location', [
+                    '@file' => $filename,
+                  ]);
+                  continue;
+                }
+
                 // Move the physical file.
-                if ($this->fileSystem->move($old_uri, $new_uri, FileExists::Replace)) {
-                  // Update the file URI.
-                  $file->setFileUri($new_uri);
-                  $file->save();
+                try {
+                  // Use file.repository to move the file properly.
+                  $new_file = $file_repository->move($file, $new_uri, FileExists::Rename);
+
+                  // Update the media field reference if file ID changed.
+                  if ($new_file->id() != $old_file_id) {
+                    // Get current usage of old file.
+                    $old_usage = $file_usage->listUsage($file);
+
+                    // Transfer file_usage from old file to new file.
+                    if (!empty($old_usage)) {
+                      foreach ($old_usage as $module => $module_usages) {
+                        foreach ($module_usages as $type => $type_usages) {
+                          foreach ($type_usages as $id => $count) {
+                            // Add usage to new file.
+                            $file_usage->add($new_file, $module, $type, $id, $count);
+                            // Remove usage from old file.
+                            $file_usage->delete($file, $module, $type, $id, $count);
+                          }
+                        }
+                      }
+                    }
+                    else {
+                      // No usage recorded - add it for this media.
+                      $file_usage->add($new_file, 'file', 'media', $media->id());
+                    }
+
+                    // Update the field reference to point to the new file.
+                    $field_values[$delta]['target_id'] = $new_file->id();
+                    $media->get($field_name)->setValue($field_values);
+
+                    // Delete old file if no longer used.
+                    $remaining_usage = $file_usage->listUsage($file);
+                    if (empty($remaining_usage)) {
+                      $file->delete();
+                      $this->logger->info('Deleted old file @fid after move', [
+                        '@fid' => $old_file_id,
+                      ]);
+                    }
+                  }
+                  else {
+                    // Same file ID, just ensure usage is recorded.
+                    $usage = $file_usage->listUsage($new_file);
+                    if (empty($usage) || !isset($usage['file']['media'][$media->id()])) {
+                      $file_usage->add($new_file, 'file', 'media', $media->id());
+                    }
+                  }
+
                   $moved_any = TRUE;
 
-                  $this->logger->info('Moved file from @old to @new', [
+                  $this->logger->info('Moved file from @old to @new (file @old_fid -> @new_fid)', [
                     '@old' => $old_uri,
-                    '@new' => $new_uri,
+                    '@new' => $new_file->getFileUri(),
+                    '@old_fid' => $old_file_id,
+                    '@new_fid' => $new_file->id(),
                   ]);
                 }
-                else {
-                  $this->logger->warning('Failed to move file @old to @new', [
+                catch (FileException $e) {
+                  $this->logger->warning('Failed to move file @old to @new: @error', [
                     '@old' => $old_uri,
                     '@new' => $new_uri,
+                    '@error' => $e->getMessage(),
                   ]);
                 }
               }
