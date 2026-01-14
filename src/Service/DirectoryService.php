@@ -4,8 +4,6 @@ namespace Drupal\media_taxonomy_service\Service;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\File\FileExists;
-use Drupal\Core\File\FileException;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\media\MediaInterface;
 use Drupal\field\Entity\FieldConfig;
@@ -571,18 +569,15 @@ class DirectoryService {
 
       // If a new term is specified, ensure the directory structure exists.
       if ($new_term_id && $new_term_id > 0) {
-        // Ensure the term's directory exists.
         if (!$this->ensureTermDirectoryExists($new_term_id, $uri_scheme)) {
           $this->logger->warning('Could not ensure term directory exists for term @tid', [
             '@tid' => $new_term_id,
           ]);
-          // Continue anyway - the move might still work or fail gracefully.
         }
       }
 
       // Build the target path based on the directory term.
-      $target_path = $uri_scheme . '://' .
-        $this->buildDirectoryPathFromTerm($new_term_id);
+      $target_path = $uri_scheme . '://' . $this->buildDirectoryPathFromTerm($new_term_id);
 
       // Retrieve the media's file fields.
       $file_fields = $this->getMediaFileFields($media);
@@ -593,7 +588,8 @@ class DirectoryService {
       }
 
       $moved_any = FALSE;
-      $file_repository = \Drupal::service('file.repository');
+      $media_modified = FALSE;
+      $file_system = \Drupal::service('file_system');
       $file_usage = \Drupal::service('file.usage');
 
       foreach ($file_fields as $field_name) {
@@ -606,78 +602,60 @@ class DirectoryService {
 
               if ($file) {
                 $old_uri = $file->getFileUri();
-                $old_file_id = $file->id();
+                $is_image = strpos($file->getMimeType(), 'image/') === 0;
                 $filename = basename($old_uri);
                 $new_uri = $target_path . '/' . $filename;
 
                 // Skip if already in the right location.
                 if ($old_uri === $new_uri) {
-                  $this->logger->debug('File @file already in target location', [
-                    '@file' => $filename,
-                  ]);
+                  $this->logger->debug('File @file already in target location', ['@file' => $filename]);
                   continue;
                 }
 
-                // Move the physical file.
                 try {
-                  // Use file.repository to move the file properly.
-                  $new_file = $file_repository->move($file, $new_uri, FileExists::Rename);
+                  // Ensure target directory exists.
+                  $directory = dirname($new_uri);
+                  $file_system->prepareDirectory($directory, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
 
-                  // Update the media field reference if file ID changed.
-                  if ($new_file->id() != $old_file_id) {
-                    // Get current usage of old file.
-                    $old_usage = $file_usage->listUsage($file);
+                  // Handle potential filename conflicts.
+                  $new_uri = $file_system->getDestinationFilename($new_uri, FileSystemInterface::EXISTS_RENAME);
 
-                    // Transfer file_usage from old file to new file.
-                    if (!empty($old_usage)) {
-                      foreach ($old_usage as $module => $module_usages) {
-                        foreach ($module_usages as $type => $type_usages) {
-                          foreach ($type_usages as $id => $count) {
-                            // Add usage to new file.
-                            $file_usage->add($new_file, $module, $type, $id, $count);
-                            // Remove usage from old file.
-                            $file_usage->delete($file, $module, $type, $id, $count);
-                          }
-                        }
-                      }
-                    }
-                    else {
-                      // No usage recorded - add it for this media.
-                      $file_usage->add($new_file, 'file', 'media', $media->id());
+                  // Move the physical file on disk.
+                  $result = $file_system->move($old_uri, $new_uri, FileSystemInterface::EXISTS_RENAME);
+
+                  if ($result) {
+                    // Update the file entity URI (SANS créer un nouveau fichier).
+                    $file->setFileUri($result);
+                    $file->save();
+                    $usage = $file_usage->listUsage($file);
+                    if (empty($usage)) {
+                      // Ré-enregistrer l'usage si perdu.
+                      $file_usage->add($file, 'file', 'media', $media->id());
+                      $this->logger->warning('Had to re-add file_usage for file @fid', ['@fid' => $file->id()]);
                     }
 
-                    // Update the field reference to point to the new file.
-                    $field_values[$delta]['target_id'] = $new_file->id();
-                    $media->get($field_name)->setValue($field_values);
-
-                    // Delete old file if no longer used.
-                    $remaining_usage = $file_usage->listUsage($file);
-                    if (empty($remaining_usage)) {
-                      $file->delete();
-                      $this->logger->info('Deleted old file @fid after move', [
-                        '@fid' => $old_file_id,
-                      ]);
+                    // Clear image style derivatives for images.
+                    if ($is_image) {
+                      image_path_flush($old_uri);
                     }
+
+                    $moved_any = TRUE;
+
+                    $this->logger->info('Moved file from @old to @new (file @fid)', [
+                      '@old' => $old_uri,
+                      '@new' => $result,
+                      '@fid' => $file->id(),
+                    ]);
                   }
                   else {
-                    // Same file ID, just ensure usage is recorded.
-                    $usage = $file_usage->listUsage($new_file);
-                    if (empty($usage) || !isset($usage['file']['media'][$media->id()])) {
-                      $file_usage->add($new_file, 'file', 'media', $media->id());
-                    }
+                    $this->logger->warning('Failed to move file @old to @new', [
+                      '@old' => $old_uri,
+                      '@new' => $new_uri,
+                    ]);
                   }
-
-                  $moved_any = TRUE;
-
-                  $this->logger->info('Moved file from @old to @new (file @old_fid -> @new_fid)', [
-                    '@old' => $old_uri,
-                    '@new' => $new_file->getFileUri(),
-                    '@old_fid' => $old_file_id,
-                    '@new_fid' => $new_file->id(),
-                  ]);
                 }
-                catch (FileException $e) {
-                  $this->logger->warning('Failed to move file @old to @new: @error', [
+                catch (\Exception $e) {
+                  $this->logger->warning('Exception moving file @old to @new: @error', [
                     '@old' => $old_uri,
                     '@new' => $new_uri,
                     '@error' => $e->getMessage(),
@@ -689,8 +667,18 @@ class DirectoryService {
         }
       }
 
-      // Return TRUE even if no files were moved (not an error).
-      return $moved_any ? TRUE : TRUE;
+      // Note: No need to save media entity since file IDs haven't changed.
+      $file = $this->entityTypeManager->getStorage('file')->load($value['target_id']);
+      if ($file) {
+        $usage = $file_usage->listUsage($file);
+        $this->logger->info('Post-move check for file @fid: status=@status, usage=@usage', [
+          '@fid' => $file->id(),
+          '@status' => $file->get('status')->value,
+          '@usage' => json_encode($usage),
+        ]);
+      }
+
+      return $moved_any;
     }
     catch (\Exception $e) {
       $this->logger->error('Error moving media files: @message', [
