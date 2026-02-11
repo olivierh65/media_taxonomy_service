@@ -17,7 +17,7 @@ directory_selector:
     - core/drupal
     - core/once
     - core/drupalSettings
-    - media_taxonomy_service/jstree
+    - media_album_av_common/jstree
     - media_taxonomy_service/taxonomy-manager
 
 taxonomy-manager:
@@ -27,4 +27,4 @@ taxonomy-manager:
       css/taxonomy-manager.css: {}
   dependencies:
     - core/jquery
-    - media_taxonomy_service/jstree
+    - media_album_av_common/jstree
